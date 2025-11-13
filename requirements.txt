@@ -1,6 +1,6 @@
 streamlit
-speechrecognition
-pyaudio
+pandas
 mysql-connector-python
 sqlalchemy
-pandas
+python-dotenv
+requests
