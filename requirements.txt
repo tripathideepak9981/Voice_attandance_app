@@ -1,0 +1,6 @@
+streamlit
+speechrecognition
+pyaudio
+mysql-connector-python
+sqlalchemy
+pandas
