@@ -1,3 +1,4 @@
+speechrecognition
 streamlit
 pandas
 mysql-connector-python
