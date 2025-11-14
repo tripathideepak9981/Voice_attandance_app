@@ -1,7 +1,7 @@
-speechrecognition
 streamlit
-pandas
-mysql-connector-python
+streamlit-webrtc
+speechrecognition
+pydub
 sqlalchemy
-python-dotenv
-requests
+mysql-connector-python
+pandas
