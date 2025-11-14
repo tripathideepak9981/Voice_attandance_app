@@ -119,59 +119,43 @@ tab1, tab2 = st.tabs(["**🎤 Mark Attendance (Mic)**", "**📊 Dashboard**"])
 with tab1:
     st.header("Speak to Mark Attendance")
 
-    st.info("🎤 Click **Start Recording** and say: 'My name is Deepak class 3A'")
+    st.info("🎤 Click **Start Recording** below and say: *'My name is [Name], class [Class]'*")
 
-    class AudioProcessor(AudioProcessorBase):
-        def __init__(self):
-            self.recognizer = sr.Recognizer()
-            self.text = None
-
-        def recv(self, frame):
-            # Convert WebRTC frame → audio
-            audio = frame.to_ndarray()
-            audio = audio.astype("int16")
-
-            # Convert to SpeechRecognition AudioData
-            audio_data = sr.AudioData(
-                audio.tobytes(),
-                sample_rate=frame.sample_rate,
-                sample_width=2
-            )
-
-            try:
-                self.text = self.recognizer.recognize_google(audio_data, language="en-IN")
-            except:
-                pass
-
-            return frame
-
+    # 🎙️ Live mic recording using streamlit-webrtc
     webrtc_ctx = webrtc_streamer(
         key="speech",
-        mode=WebRtcMode.RECVONLY,
-        audio_processor_factory=AudioProcessor,
+        mode=WebRtcMode.SENDONLY,
+        audio_receiver_size=256,
         media_stream_constraints={"audio": True, "video": False},
     )
 
-    if webrtc_ctx.audio_processor:
-        result = webrtc_ctx.audio_processor.text
+    # Only show this section when user clicks start
+    if webrtc_ctx.state.playing:
+        st.markdown("---")
+        st.write("🕒 **Listening... Please speak clearly.**")
 
-        if result:
-            st.success(f"🎧 You said: **{result}**")
+        recognizer = sr.Recognizer()
+        try:
+            with sr.Microphone() as source:
+                recognizer.adjust_for_ambient_noise(source, duration=1)
+                audio_data = recognizer.listen(source, timeout=5, phrase_time_limit=7)
+                text_result = recognizer.recognize_google(audio_data, language="en-IN")
+                st.success(f"✅ You said: '{text_result}'")
 
-            name, class_name = parse_attendance(result)
-
-            if name and class_name:
-                status, msg = mark_attendance(name, class_name)
-
-                if status == "success":
-                    st.success(msg)
-                    st.balloons()
-                elif status == "warning":
-                    st.warning(msg)
+                name, class_name = parse_attendance(text_result)
+                if name and class_name:
+                    status, msg = mark_attendance(name, class_name)
+                    if status == "success":
+                        st.success(msg)
+                        st.balloons()
+                    elif status == "warning":
+                        st.warning(msg)
+                    else:
+                        st.error(msg)
                 else:
-                    st.error(msg)
-            else:
-                st.warning("Could not detect name or class. Please repeat clearly.")
+                    st.warning("❌ Could not detect name or class. Please repeat clearly.")
+        except Exception as e:
+            st.error(f"🎧 Error capturing audio: {e}")
 
 # -----------------
 # TAB 2: DASHBOARD
